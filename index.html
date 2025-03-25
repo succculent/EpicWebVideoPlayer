@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@mux/mux-video@0.19/+esm"></script>
+  <title>WATCH NOW</title>
+  <script>
+    let resize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      let canvas = document.querySelector('canvas');
+      canvas.width = width;
+      canvas.height = height;
+    }
+  </script>
+  <style>
+*{
+    margin: 0;
+    padding: 0;
+}
+html,
+body {
+    overflow: hidden;
+}
+.c {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    outline: none;
+}
+mux-video {
+    display: none;
+}
+  </style>
+</head>
+<body>
+    <media-controller>
+      <mux-video
+        playback-id="X9Swk01mz5NEKKcbBfLhWJhyFrxzw01fHvVJpkWSle02u00"
+        slot="media"
+        stream-type="on-demand"
+        headless
+        crossorigin
+        autoplay
+        muted
+        loop
+      ></mux-video>
+    </media-controller>
+    <canvas class="c" width="10" height="10"></canvas>
+    <script>
+      resize();
+      window.addEventListener('resize', resize);
+      const player = document.querySelector('mux-video');
+      let video = null;
+      const canvas = document.querySelector('canvas');
+      const ctx = canvas.getContext('2d');
+      const processor = {};
+      let mouseY;
+      window.addEventListener('mousemove', (e) => { mouseY = e.clientY; });
+      player.addEventListener("loadedmetadata", () => {
+        video = player.shadowRoot.querySelector('video');
+        let width = video.videoWidth;
+        let height = video.videoHeight;
+        const imageCanvas = document.createElement('canvas');
+        const imageCtx = imageCanvas.getContext('2d');
+        imageCanvas.width = window.innerWidth;
+        imageCanvas.height = window.innerHeight;
+        let computeFrame = () => {
+          imageCtx.drawImage(video, 0, 0, window.innerWidth, window.innerHeight);
+          const frame = imageCtx.getImageData(0, 0, width, height);
+          const data = frame.data;
+          for (let k = 0; k < canvas.width * canvas.height; k += 4) {
+            let j = Math.floor(k / height);
+            let i = k % height;
+            // GOD CODE
+            let iData = (i * width) / canvas.width;
+            let jData = (Math.abs(mouseY - j) <= 50) ?
+                    (j * height) / canvas.height : 0; 
+                    (mouseY - j < 0)
+                          ? (j * height) / canvas.height - 50 : (j * height) / canvas.height + 50;
+            let r = data[jData * width * 4 + i * 4];
+            let g = data[j * width * 4 + i * 4 + 1];
+            let b = data[j * width * 4 + iData * 4 + 2];
+            frame.data[k] = r;
+            frame.data[k + 1] = g;
+            frame.data[k + 2] = b;
+            // END GOD CODE
+          }
+          const newFrame = new ImageData(data, width, height);
+          ctx.putImageData(newFrame, 0, 0);
+          // ctx.drawImage(imageCanvas, 0, 0, canvas.width, canvas.height);
+          requestAnimationFrame(computeFrame);
+        };
+        computeFrame();
+      });
+        // let timerCallback = () => {
+        //   computeFrame();
+        //   setTimeout(() => {
+        //     timerCallback();
+        //   }, 0);
+        // };
+        // timerCallback();
+      // });
+    </script>
+</body>
+</html>
